@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            text-align: center;
+        }
+
+        .vert {
+            margin-bottom: 10%;
+        }
+
+        .hori {
+            margin-bottom: 0%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h2>AC voltage sensor </h2>
+        <p>Time now: <strong> %timeNow%</strong></p>
+        <p>IP: <strong> %ipAdress%</strong></p>
+        <p>Mac: <strong> %macAdress%</strong></p>
+        <p>Current Voltage: <strong> %currentVoltage%</strong></p>
+
+        <p>Timer Count : <strong> %timerCount% </strong></p>
+        <p>Reset count : <strong> %resetCount%</strong></p>
+
+        <form action="/get" target="hidden-form">
+            Hostname(save & reset to change) : %idHostname% <input type="text" name="idHostname">
+            <input type="submit" value="Submit" onclick=" submitMessage()">
+        </form><br>
+        <form action="/get" target=hidden-form>
+            time cycle to read in Second: %timeCycle% <input type="number" name="timeCycle">
+            <input type="submit" value="Submit" onclick=" submitMessage()">
+        </form><br>
+
+        <table style="width:100%">
+
+            <tr>
+                <th><a href="/"><button class="button">Save data</button> </a></th>
+                <th><a href="/reset"><button class="button"> RESET </button></a></th>
+            </tr>
+        </table>
+
+    </div>
