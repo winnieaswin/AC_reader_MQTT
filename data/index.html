@@ -25,9 +25,17 @@
         <p>IP: <strong> %ipAdress%</strong></p>
         <p>Mac: <strong> %macAdress%</strong></p>
         <p>Current Voltage: <strong> %currentVoltage%</strong></p>
-
         <p>Timer Count : <strong> %timerCount% </strong></p>
         <p>Reset count : <strong> %resetCount%</strong></p>
+
+        <form action="/get" target="hidden-form">
+            Offset1 Remove AC and put 0 for calibrate : %offset1% <input type="number" name="offset1">
+            <input type="submit" value="Submit" onclick=" submitMessage()">
+        </form><br>
+        <form action="/get" target="hidden-form">
+            Offset2 Remove AC and put 0 for calibrate : %offset2% <input type="number" name="offset2">
+            <input type="submit" value="Submit" onclick=" submitMessage()">
+        </form><br>
 
         <form action="/get" target="hidden-form">
             Hostname(save & reset to change) : %idHostname% <input type="text" name="idHostname">
@@ -41,6 +49,7 @@
         <table style="width:100%">
 
             <tr>
+                <th><a href="/Calibration"><button class="button">Calibration</button> </a></th>
                 <th><a href="/"><button class="button">Save data</button> </a></th>
                 <th><a href="/reset"><button class="button"> RESET </button></a></th>
             </tr>
