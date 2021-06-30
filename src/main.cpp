@@ -15,8 +15,7 @@ float smoothedSensorValueAvg;
 float totalSum;
 
 // From Solarduino
-int decimalPrecision =
-    2; // decimal places for all values shown in LED Display & Serial Monitor
+int decimalPrecision = 2; // decimal places for all values shown in LED Display & Serial Monitor
 
 /* 1- AC Voltage Measurement */
 
@@ -56,6 +55,14 @@ float offsetSampleSumV = 0; /* accumulation of sample readings for offset */
 // variable hardware
 const int ledPin = 2;
 const int acPin = 34;
+const int floatingSensor = 15;
+
+// variable for count Floating
+float floatingCnt = 0;
+float floating60min = 3600; // number windows for count 3600 sec = 60min by defaut
+float floatingAverge = 0.0;
+int floating3600 = 3600;
+char C_floatingAverge[20];
 
 // timer interrupt
 volatile int interruptCounter1;
@@ -84,6 +91,7 @@ String S_voltageOffset1;
 String S_voltageOffset2;
 
 char C_topic_ac_Hostname[40] = "esp32/ac/";
+char C_topic_floatSwitch_Hostname[40] = "esp32/floatSwitch/";
 char Cm_idHostname[40];
 char C_currentVoltage[20];
 char C_voltRMS[20];
@@ -118,7 +126,7 @@ int countReadNumber = 200;
 String processor(const String &var) // display value on http
 {
   if (var == "idHostname") {
-    S_idHostname = readFile(SPIFFS, "/idHostname.txt");
+    // S_idHostname = readFile(SPIFFS, "/idHostname.txt");
     return readFile(SPIFFS, "/idHostname.txt");
   } else if (var == "timeNow") {
     return timeNow();
@@ -135,12 +143,14 @@ String processor(const String &var) // display value on http
     return readFile(SPIFFS, "/timerCount.txt");
   } else if (var == "currentVoltage") {
     return String(FinalRMSVoltage);
+  } else if (var == "floatSwitchAvg") {
+    return String(floatingAverge);
   } else if (var == "offset1") {
     return readFile(SPIFFS, "/voltageOffset1.txt");
   } else if (var == "offset2") {
     return readFile(SPIFFS, "/voltageOffset2.txt");
-  }
-  return String();
+  } 
+   return String();
 }
 
 void init_server() // Server init
@@ -199,6 +209,20 @@ void init_server() // Server init
   server.begin();
 } // end Server init
 
+void calculSpeedWater() {
+  floatingAverge = ((floatingCnt / floating3600) * 100);
+  Serial.print("floatingAverge %: ");
+  Serial.print(floatingAverge);
+  Serial.println(" % ");
+  dtostrf(floatingAverge, 3, 2, C_floatingAverge);
+  sendPublish(C_topic_floatSwitch_Hostname, C_floatingAverge);
+  Serial.print("Topic : ");
+  Serial.println(C_topic_floatSwitch_Hostname);
+  Serial.print("C_floatingAverge : ");
+  Serial.println(C_floatingAverge);
+  floatingCnt = 0;
+}
+
 void adcToVolt() {
   /* 1- AC Voltage Measurement */
 
@@ -238,9 +262,9 @@ void adcToVolt() {
     {
       FinalRMSVoltage = 0;
     }
-    Serial.print(" The Voltage RMS value is: ");
-    Serial.print(FinalRMSVoltage, decimalPrecision);
-    Serial.println(" V ");
+    // Serial.print(" The Voltage RMS value is: ");
+    // Serial.print(FinalRMSVoltage, decimalPrecision);
+    // Serial.println(" V ");
     dtostrf(FinalRMSVoltage, 3, 2, C_voltRMS);
     offsetSampleSumV = 0;
     voltageSampleSum =
@@ -249,8 +273,8 @@ void adcToVolt() {
     mySensor.add(FinalRMSVoltage);
     smoothedSensorValueAvg = mySensor.get();
     dtostrf(smoothedSensorValueAvg, 3, 2, C_smoothVoltRMS);
-    Serial.print("smooth voltage : ");
-    Serial.println(C_smoothVoltRMS);
+    // Serial.print("smooth voltage : ");
+    // Serial.println(C_smoothVoltRMS);
   }
 }
 void offsetAC() {
@@ -323,12 +347,14 @@ void setup() {
   init_server(); // start server
   init_OTA();
   timerAlarmEnable(timer);
-  readFile(SPIFFS, "/idHostname.txt").toCharArray(Cm_idHostname, 40);
+  S_idHostname.toCharArray(Cm_idHostname, 40);
   strcat(C_topic_ac_Hostname, Cm_idHostname);
+  strcat(C_topic_floatSwitch_Hostname, Cm_idHostname);
   mySensor.begin(SMOOTHED_AVERAGE, 10);
+  mySensor.clear();
   analogReadResolution(10);
   adcAttachPin(acPin);
-  mySensor.clear();
+  pinMode(floatingSensor, INPUT_PULLDOWN);
 }
 
 void loop() {
@@ -364,6 +390,18 @@ void loop() {
       digitalWrite(ledPin, LOW);
     } else {
       digitalWrite(ledPin, HIGH);
+    }
+
+    floating60min--;
+
+    if (digitalRead(floatingSensor) == HIGH) {
+      floatingCnt++;
+      Serial.print("floatingCnt :");
+      Serial.println(floatingCnt);
+    }
+    if (floating60min <= 0) {
+      floating60min = floating3600;
+      calculSpeedWater();
     }
 
     if (timerCount == Int_timeCycle) {
