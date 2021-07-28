@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "initbase.h"
 
-const char *ssid = "CLV";
+const char *ssid = "CLV_mesh";
 const char *password = "Pi@Riya*1";
 //pin configuration
 int Ledboard = 2;
