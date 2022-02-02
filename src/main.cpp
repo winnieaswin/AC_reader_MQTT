@@ -59,9 +59,9 @@ const int floatingSensor = 15;
 
 // variable for count Floating
 float floatingCnt = 0;
-float floating60min = 3600; // number windows for count 3600 sec = 60min by defaut
+float SendValueAvg = 900; // number windows for count 3600 sec = 60min by defaut
+float forAvgCalc  = 900;
 float floatingAverge = 0.0;
-int floating3600 = 3600;
 char C_floatingAverge[20];
 
 // timer interrupt
@@ -78,14 +78,17 @@ const char *PARAM_ipAdress = "ipAdress";
 const char *PARAM_macAdress = "macAdress";
 const char *PARAM_idHostname = "idHostname";
 const char *PARAM_timeCycle = "timeCycle";
+const char *PARAM_cycleAvg = "cycleAvg";
 const char *PARAM_offset1 = "offset1";
 const char *PARAM_offset2 = "offset2";
 
 int Int_timeCycle;
+int Int_cycleAvg;
 String S_ipAdress;
 String S_macAdress;
 String S_idHostname;
 String S_timeCycle;
+String S_cycleAvg;
 String S_currentVoltage;
 String S_voltageOffset1;
 String S_voltageOffset2;
@@ -139,12 +142,17 @@ String processor(const String &var) // display value on http
   } else if (var == "timeCycle") {
     S_timeCycle = readFile(SPIFFS, "/timeCycle.txt");
     return readFile(SPIFFS, "/timeCycle.txt");
+  } else if (var == "cycleAvg") {
+    S_cycleAvg = readFile(SPIFFS, "/cycleAvg.txt");
+    return readFile(SPIFFS, "/cycleAvg.txt");
   } else if (var == "timerCount") {
     return readFile(SPIFFS, "/timerCount.txt");
   } else if (var == "currentVoltage") {
     return String(FinalRMSVoltage);
   } else if (var == "floatSwitchAvg") {
     return String(floatingAverge);
+  } else if (var == "floatCnt") {
+    return String(floatingCnt);
   } else if (var == "offset1") {
     return readFile(SPIFFS, "/voltageOffset1.txt");
   } else if (var == "offset2") {
@@ -168,6 +176,9 @@ void init_server() // Server init
   // Read timeCycle
   S_timeCycle = readFile(SPIFFS, "/timeCycle.txt");
   Int_timeCycle = S_timeCycle.toInt();
+
+  S_cycleAvg = readFile(SPIFFS, "/cycleAvg.txt");
+  Int_cycleAvg = S_cycleAvg.toInt();
 
   server.on("/Calibration", HTTP_GET, [](AsyncWebServerRequest *request) {
     OffsetStatus = 1;
@@ -194,6 +205,9 @@ void init_server() // Server init
     } else if (request->hasParam(PARAM_timeCycle)) {
       inputMessage = request->getParam(PARAM_timeCycle)->value();
       writeFile(SPIFFS, "/timeCycle.txt", inputMessage.c_str());
+    } else if (request->hasParam(PARAM_cycleAvg)) {
+      inputMessage = request->getParam(PARAM_cycleAvg)->value();
+      writeFile(SPIFFS, "/cycleAvg.txt", inputMessage.c_str());
     } else if (request->hasParam(PARAM_offset1)) {
       inputMessage = request->getParam(PARAM_offset1)->value();
       writeFile(SPIFFS, "/voltageOffset1.txt", inputMessage.c_str());
@@ -210,7 +224,7 @@ void init_server() // Server init
 } // end Server init
 
 void calculSpeedWater() {
-  floatingAverge = ((floatingCnt / floating3600) * 100);
+  floatingAverge = (floatingCnt / readFile(SPIFFS, "/cycleAvg.txt").toInt())*100 ;
   Serial.print("floatingAverge %: ");
   Serial.print(floatingAverge);
   Serial.println(" % ");
@@ -392,16 +406,17 @@ void loop() {
       digitalWrite(ledPin, HIGH);
     }
 
-    floating60min--;
+    Int_cycleAvg--;
 
     if (digitalRead(floatingSensor) == HIGH) {
       floatingCnt++;
       Serial.print("floatingCnt :");
       Serial.println(floatingCnt);
     }
-    if (floating60min <= 0) {
-      floating60min = floating3600;
+    if (Int_cycleAvg == 0) {
       calculSpeedWater();
+      Int_cycleAvg= readFile(SPIFFS, "/cycleAvg.txt").toInt();
+
     }
 
     if (timerCount == Int_timeCycle) {

@@ -26,6 +26,7 @@
         <p>Mac: <strong> %macAdress%</strong></p>
         <p>Current Voltage: <strong> %currentVoltage%</strong></p>
         <p>Float Switch average percent: <strong> %floatSwitchAvg%</strong></p>
+        <p>Counter floating <strong>%floatCnt% </strong></p>
         <p>Timer Count : <strong> %timerCount% </strong></p>
         <p>Reset count : <strong> %resetCount%</strong></p>
 
@@ -44,6 +45,10 @@
         </form><br>
         <form action="/get" target=hidden-form>
             time cycle to read in Second: %timeCycle% <input type="number" name="timeCycle">
+            <input type="submit" value="Submit" onclick=" submitMessage()">
+        </form><br>        
+        <form action="/get" target=hidden-form>
+            time cycle to send Floating average in second: %cycleAvg% <input type="number" name="cycleAvg">
             <input type="submit" value="Submit" onclick=" submitMessage()">
         </form><br>
 
